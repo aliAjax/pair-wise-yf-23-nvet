@@ -1,21 +1,28 @@
+import { LOG_TEMPLATES } from "../constants/logTemplates";
 import { mockData } from "../mocks/seedData";
+import { idbPut, idbReadAll, idbSeedIfEmpty } from "../utils/indexedDb";
 import type { ShowProject } from "../types/ShowProject";
 
 const endpoint = "/api/show-project";
 
 export async function listShowProject(): Promise<ShowProject[]> {
-  if (typeof fetch !== "undefined" && endpoint.startsWith("/api") && false) {
-    try {
-      const res = await fetch(endpoint);
-      if (res.ok) return await res.json();
-    } catch {
-      // Local mock fallback keeps the UI available during offline review.
-    }
+  try {
+    await idbSeedIfEmpty("showProject", mockData.showProject);
+    return await idbReadAll<ShowProject>("showProject");
+  } catch {
+    // Local mock fallback keeps the UI available during offline review.
+    return mockData.showProject.map((row) => ({ ...row }));
   }
-  return [...(mockData.showProject as unknown as ShowProject[])];
 }
 
 export async function saveShowProject(payload: ShowProject) {
-  console.info("save ShowProject", payload);
+  console.info(LOG_TEMPLATES.ShowProject[1], payload);
+  try {
+    await idbPut("showProject", payload);
+  } catch {
+    // Offline review keeps the in-memory payload as the source of truth.
+  }
   return payload;
 }
+
+export { endpoint as showProjectEndpoint };

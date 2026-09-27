@@ -1,21 +1,28 @@
+import { LOG_TEMPLATES } from "../constants/logTemplates";
 import { mockData } from "../mocks/seedData";
+import { idbPut, idbReadAll, idbSeedIfEmpty } from "../utils/indexedDb";
 import type { TimelineTrack } from "../types/TimelineTrack";
 
 const endpoint = "/api/timeline-track";
 
 export async function listTimelineTrack(): Promise<TimelineTrack[]> {
-  if (typeof fetch !== "undefined" && endpoint.startsWith("/api") && false) {
-    try {
-      const res = await fetch(endpoint);
-      if (res.ok) return await res.json();
-    } catch {
-      // Local mock fallback keeps the UI available during offline review.
-    }
+  try {
+    await idbSeedIfEmpty("timelineTrack", mockData.timelineTrack);
+    return await idbReadAll<TimelineTrack>("timelineTrack");
+  } catch {
+    // Local mock fallback keeps the UI available during offline review.
+    return mockData.timelineTrack.map((row) => ({ ...row }));
   }
-  return [...(mockData.timelineTrack as unknown as TimelineTrack[])];
 }
 
 export async function saveTimelineTrack(payload: TimelineTrack) {
-  console.info("save TimelineTrack", payload);
+  console.info(LOG_TEMPLATES.TimelineTrack[1], payload);
+  try {
+    await idbPut("timelineTrack", payload);
+  } catch {
+    // Offline review keeps the in-memory payload as the source of truth.
+  }
   return payload;
 }
+
+export { endpoint as timelineTrackEndpoint };
