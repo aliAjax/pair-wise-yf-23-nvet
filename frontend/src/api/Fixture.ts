@@ -1,21 +1,23 @@
 import { mockData } from "../mocks/seedData";
 import type { Fixture } from "../types/Fixture";
+import { getAllRows, putRows } from "../utils/persistence";
 
-const endpoint = "/api/fixture";
+const STORE = "fixture";
 
 export async function listFixture(): Promise<Fixture[]> {
-  if (typeof fetch !== "undefined" && endpoint.startsWith("/api") && false) {
-    try {
-      const res = await fetch(endpoint);
-      if (res.ok) return await res.json();
-    } catch {
-      // Local mock fallback keeps the UI available during offline review.
-    }
-  }
-  return [...(mockData.fixture as unknown as Fixture[])];
+  const stored = await getAllRows<Fixture>(STORE);
+  if (stored.length > 0) return stored.sort((a, b) => a.id - b.id);
+  const seed = [...(mockData.fixture as unknown as Fixture[])];
+  await putRows(STORE, seed);
+  return seed;
 }
 
 export async function saveFixture(payload: Fixture) {
-  console.info("save Fixture", payload);
+  await putRows(STORE, [payload]);
   return payload;
+}
+
+export async function saveFixtures(payloads: Fixture[]) {
+  await putRows(STORE, payloads);
+  return payloads;
 }

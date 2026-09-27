@@ -1,21 +1,18 @@
 import { mockData } from "../mocks/seedData";
 import type { TimelineTrack } from "../types/TimelineTrack";
+import { getAllRows, putRows } from "../utils/persistence";
 
-const endpoint = "/api/timeline-track";
+const STORE = "timelineTrack";
 
 export async function listTimelineTrack(): Promise<TimelineTrack[]> {
-  if (typeof fetch !== "undefined" && endpoint.startsWith("/api") && false) {
-    try {
-      const res = await fetch(endpoint);
-      if (res.ok) return await res.json();
-    } catch {
-      // Local mock fallback keeps the UI available during offline review.
-    }
-  }
-  return [...(mockData.timelineTrack as unknown as TimelineTrack[])];
+  const stored = await getAllRows<TimelineTrack>(STORE);
+  if (stored.length > 0) return stored.sort((a, b) => a.id - b.id);
+  const seed = [...(mockData.timelineTrack as unknown as TimelineTrack[])];
+  await putRows(STORE, seed);
+  return seed;
 }
 
 export async function saveTimelineTrack(payload: TimelineTrack) {
-  console.info("save TimelineTrack", payload);
+  await putRows(STORE, [payload]);
   return payload;
 }
